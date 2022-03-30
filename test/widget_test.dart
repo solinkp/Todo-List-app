@@ -9,22 +9,100 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:todo/main.dart';
+import 'package:todo/signin/signin_service.dart';
+import 'package:todo/widgets/custom_text_field.dart';
+
+class MockSignInService implements SignInService {
+  @override
+  bool signIn(String email, String password) {
+    return email == 'rsanchezsk@gmail.com' && password == '123456';
+  }
+}
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(MyApp());
+  testWidgets('empty email and password', (WidgetTester tester) async {
+    await tester.pumpWidget(App());
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    Finder email = find.byKey(new Key('email'));
+    Finder password = find.byKey(new Key('password'));
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
+    print("Getting email widget");
+    print(email.toString());
+
+    print("Getting password widget");
+    print(password.toString());
+
+    print("Getting form widget");
+    Finder formWidgetFinder = find.byType(Form);
+    print(formWidgetFinder.toString());
+
+    Form formWidget = tester.widget(formWidgetFinder) as Form;
+    GlobalKey<FormState> formKey = formWidget.key as GlobalKey<FormState>;
+    expect(formKey.currentState!.validate(), isFalse);
+  });
+
+  testWidgets('email and password with values', (WidgetTester tester) async {
+    await tester.pumpWidget(App());
+
+    Finder email = find.byKey(new Key('email'));
+    Finder password = find.byKey(new Key('password'));
+
+    await tester.enterText(email, "rsanchezsk@gmail.com");
+    await tester.enterText(password, "123456");
     await tester.pump();
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    Finder formWidgetFinder = find.byType(Form);
+    Form formWidget = tester.widget(formWidgetFinder) as Form;
+    GlobalKey<FormState> formKey = formWidget.key as GlobalKey<FormState>;
+
+    expect(formKey.currentState!.validate(), isTrue);
+  });
+
+  testWidgets('sign in success', (WidgetTester tester) async {
+    await tester.pumpWidget(App());
+
+    Finder email = find.byKey(new Key('email'));
+    Finder password = find.byKey(new Key('password'));
+
+    await tester.enterText(email, "rsanchezsk@gmail.com");
+    await tester.enterText(password, "123456");
+    await tester.pump();
+
+    CustomTextField emailTextField = tester.firstWidget(email);
+    String emailValue = emailTextField.textController.text;
+
+    CustomTextField passwordTextField = tester.firstWidget(password);
+    String passwordValue = passwordTextField.textController.text;
+
+    Finder formWidgetFinder = find.byType(Form);
+    Form formWidget = tester.widget(formWidgetFinder) as Form;
+    GlobalKey<FormState> formKey = formWidget.key as GlobalKey<FormState>;
+
+    expect(formKey.currentState!.validate(), isTrue);
+    expect(MockSignInService().signIn(emailValue, passwordValue), isTrue);
+  });
+
+  testWidgets('sign in fail', (WidgetTester tester) async {
+    await tester.pumpWidget(App());
+
+    Finder email = find.byKey(new Key('email'));
+    Finder password = find.byKey(new Key('password'));
+
+    await tester.enterText(email, "rsanchez@gmail.com");
+    await tester.enterText(password, "123");
+    await tester.pump();
+
+    CustomTextField emailTextField = tester.firstWidget(email);
+    String emailValue = emailTextField.textController.text;
+
+    CustomTextField passwordTextField = tester.firstWidget(password);
+    String passwordValue = passwordTextField.textController.text;
+
+    Finder formWidgetFinder = find.byType(Form);
+    Form formWidget = tester.widget(formWidgetFinder) as Form;
+    GlobalKey<FormState> formKey = formWidget.key as GlobalKey<FormState>;
+
+    expect(formKey.currentState!.validate(), isTrue);
+    expect(MockSignInService().signIn(emailValue, passwordValue), isFalse);
   });
 }
